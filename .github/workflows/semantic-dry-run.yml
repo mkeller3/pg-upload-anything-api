@@ -1,0 +1,31 @@
+name: semantic-release-dry-run
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  semantic-release-dry-run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: semantic_release_dry_run
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          dry_run: true
+          extends: |
+            conventional-changelog-conventionalcommits
+          extra_plugins: |
+            @semantic-release/git
+            @semantic-release/changelog
+            @semantic-release/commit-analyzer
+            @semantic-release/exec

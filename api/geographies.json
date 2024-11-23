@@ -1,0 +1,84 @@
+[
+  {
+    "name": "address",
+    "fields": {
+      "address_1": { "potential_names": ["address", "address_1"] },
+      "address_2": { "potential_names": ["address_2"] },
+      "zip": { "potential_names": ["zip", "postal_code", "zip_code"] },
+      "state": {
+        "potential_names": [
+          "state",
+          "province",
+          "state_code",
+          "state_name",
+          "state_abbreviation",
+          "state_abbr",
+          "st"
+        ]
+      }
+    },
+    "rank": 5
+  },
+  {
+    "name": "zip_code",
+    "fields": {
+      "zip_code": { "potential_names": ["zip", "postal_code", "zip_code"] }
+    },
+    "rank": 8
+  },
+  {
+    "name": "counties",
+    "fields": {
+      "state_county_fips_code": {
+        "potential_names": [
+          "state_county_fips_code",
+          "st_county_fips",
+          "st_county_fip",
+          "st_cnty_fips",
+          "st_cnty_fip"
+        ]
+      }
+    },
+    "rank": 7
+  },
+  {
+    "name": "states",
+    "fields": {
+      "state_name": {
+        "potential_names": [
+          "state",
+          "province",
+          "state_code",
+          "state_name",
+          "state_abbreviation",
+          "state_abbr",
+          "st"
+        ]
+      }
+    },
+    "rank": 6
+  },
+  {
+    "name": "latitude_and_longitude",
+    "fields": {
+      "latitude": { "potential_names": ["latitude", "lat", "x"] },
+      "longitude": { "potential_names": ["longitude", "lon", "y"] }
+    },
+    "rank": 4
+  },
+  {
+    "name": "wkt_geometry",
+    "fields": { "geometry": { "potential_names": ["wkt"] } },
+    "rank": 2
+  },
+  {
+    "name": "wkb_geometry",
+    "fields": { "geometry": { "potential_names": ["wkb"] } },
+    "rank": 1
+  },
+  {
+    "name": "geojson_geometry",
+    "fields": { "geometry": { "potential_names": ["geojson"] } },
+    "rank": 3
+  }
+]

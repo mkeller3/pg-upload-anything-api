@@ -1,0 +1,3 @@
+city,geojson
+chicago,"{""type"": ""Point"", ""coordinates"": [-87.695, 41.909]}"
+atlanta,"{""type"": ""Point"", ""coordinates"": [-84.373, 33.814]}"
