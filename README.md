@@ -1,4 +1,8 @@
-# pg-upload-anything-api
+<p align="center">
+  <img width="500" src="docs/logos/logo.png"/ alt-text="main image">
+  <h1 align="center">pg-upload-anything-api</h1>
+</p>
+
 
 **pg-upload-anything-api**  is an api that allows you to easily upload geographical vector data into a PostgreSQL database. This API allows you take the guess work out of loading geograhphic or non geographic files into the database. This project was built with inspiration from Felt's [Upload Anything](https://felt.com/blog/upload-anything) API endpoints.
 
@@ -49,7 +53,7 @@ Read data directly from all sheets within the spreadsheet.
 #### Response
 
 ```json
-{"status": "success", "table_name": "table_name"}
+[{"status": "success", "table_name": "table_name"}]
 ```
 
 ### Upload URL
@@ -82,5 +86,5 @@ Read data directly from all sheets within the spreadsheet.
 #### Response
 
 ```json
-{"status": "success", "table_name": "table_name"}
+[{"status": "success", "table_name": "table_name"}]
 ```
