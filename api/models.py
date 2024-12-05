@@ -5,6 +5,12 @@ Models
 from pydantic import BaseModel
 
 
+class HealthCheckResponse(BaseModel):
+    """HealthCheckResponse"""
+
+    status: str
+
+
 class GeographyField(BaseModel):
     """
     Geography field model
