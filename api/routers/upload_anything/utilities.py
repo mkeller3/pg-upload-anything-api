@@ -8,8 +8,6 @@ import psycopg2
 from fastapi import FastAPI
 from shapely import wkb, wkt
 
-from api.config import DB_HOST, DB_NAME, DB_PASSWORD, DB_USER
-
 
 def clean_string(string: str):
     """
@@ -74,6 +72,7 @@ def import_point_dataset(
     latitude: str,
     longitude: str,
     table_name: str,
+    app: FastAPI,
 ):
     """
     Imports a point dataset into a PostgreSQL database using the ogr2ogr command.
@@ -91,7 +90,7 @@ def import_point_dataset(
     """
     subprocess.call(
         f"""ogr2ogr \
-        -f "PostgreSQL" PG:"dbname={DB_NAME} user={DB_USER} password={DB_PASSWORD} host={DB_HOST}" \
+        -f "PostgreSQL" PG:"dbname={app.state.dbname} user={app.state.dbuser} password={app.state.dbpass} host={app.state.dbhost} port={app.state.dbport}" \
         {file_path} \
         -oo X_POSSIBLE_NAMES={longitude}* \
         -oo Y_POSSIBLE_NAMES={latitude}* \
@@ -116,6 +115,7 @@ def join_to_map_service(
     map_name: str,
     table_match_column: str,
     map_match_column: str,
+    app: FastAPI,
 ):
     """
     Joins a file containing data to a map service using the ogr2ogr command.
@@ -132,7 +132,7 @@ def join_to_map_service(
         map_match_column (str): The column name in the map service table that will be used to join the data to the map service.
     """
     subprocess.call(
-        f"""ogr2ogr -f "PostgreSQL" PG:"dbname={DB_NAME} user={DB_USER} password={DB_PASSWORD} host={DB_HOST}" \
+        f"""ogr2ogr -f "PostgreSQL" PG:"dbname={app.state.dbname} user={app.state.dbuser} password={app.state.dbpass} host={app.state.dbhost} port={app.state.dbport}" \
         {file_path} -nln {table_name}_temp -lco FID=gid  -overwrite""",
         shell=True,
     )
@@ -146,10 +146,11 @@ def join_to_map_service(
     drop_temp_table_query = f"""DROP TABLE IF EXISTS "{table_name}_temp";"""
 
     connection = psycopg2.connect(
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        host=DB_HOST,
+        dbname=app.state.dbname,
+        user=app.state.dbuser,
+        password=app.state.dbpass,
+        host=app.state.dbhost,
+        port=app.state.dbport,
     )
     cursor = connection.cursor()
     cursor.execute(drop_table_query)
@@ -165,7 +166,7 @@ def join_to_map_service(
     }
 
 
-def upload_geographic_file(file_path: str, table_name: str):
+def upload_geographic_file(file_path: str, table_name: str, app: FastAPI):
     """
     Uploads a geographic file to a PostgreSQL database using the ogr2ogr command.
 
@@ -177,8 +178,9 @@ def upload_geographic_file(file_path: str, table_name: str):
         file_path (str): The path to the geographic file to be uploaded.
         table_name (str): The name of the PostgreSQL table where the data will be stored.
     """
+
     subprocess.call(
-        f"""ogr2ogr -f "PostgreSQL" PG:"dbname={DB_NAME} user={DB_USER} password={DB_PASSWORD} host={DB_HOST}" \
+        f"""ogr2ogr -f "PostgreSQL" PG:"dbname={app.state.dbname} user={app.state.dbuser} password={app.state.dbpass} host={app.state.dbhost} port={app.state.dbport}" \
         {file_path} -nln {table_name} -lco FID=gid -lco GEOMETRY_NAME=geom  -overwrite""",
         shell=True,
     )
@@ -319,6 +321,7 @@ def upload_csv_file(write_file_path: str, file_name: str, app: FastAPI) -> objec
             latitude=matching_geography["field_matches"]["latitude"],
             longitude=matching_geography["field_matches"]["longitude"],
             table_name=file_name.split(".")[0],
+            app=app,
         )
 
     elif matching_geography["name"] == "geojson_geometry":
@@ -326,6 +329,7 @@ def upload_csv_file(write_file_path: str, file_name: str, app: FastAPI) -> objec
         upload_geographic_file(
             file_path=write_file_path.replace(".csv", ".geojson"),
             table_name=file_name.split(".")[0],
+            app=app,
         )
         os.remove(write_file_path.replace(".csv", ".geojson"))
 
@@ -334,6 +338,7 @@ def upload_csv_file(write_file_path: str, file_name: str, app: FastAPI) -> objec
         upload_geographic_file(
             file_path=write_file_path.replace(".csv", ".geojson"),
             table_name=file_name.split(".")[0],
+            app=app,
         )
         os.remove(write_file_path.replace(".csv", ".geojson"))
 
@@ -342,6 +347,7 @@ def upload_csv_file(write_file_path: str, file_name: str, app: FastAPI) -> objec
         upload_geographic_file(
             file_path=write_file_path.replace(".csv", ".geojson"),
             table_name=file_name.split(".")[0],
+            app=app,
         )
         os.remove(write_file_path.replace(".csv", ".geojson"))
 
@@ -354,6 +360,7 @@ def upload_csv_file(write_file_path: str, file_name: str, app: FastAPI) -> objec
             map_name=matching_geography["name"],
             table_match_column=matching_geography["field_matches"][map_match_column],
             map_match_column=map_match_column,
+            app=app,
         )
 
     return {

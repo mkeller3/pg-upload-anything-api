@@ -179,7 +179,6 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
             )
 
         if file_extension.lower() == "csv":
-            print("ddddddd")
             result = upload_csv_file(
                 write_file_path=f"{os.getcwd()}/media/{new_file_name}/{new_file_name}.{file_extension}",
                 file_name=file_name.split(".")[0],
@@ -226,6 +225,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
             results = upload_geographic_file(
                 file_path=f"{os.getcwd()}/media/{new_file_name}.{valid_file_extension}",
                 table_name=file_name.split(".")[0],
+                app=request.app,
             )
         media_directory = os.listdir(f"{os.getcwd()}/media/")
         for file in media_directory:
@@ -254,18 +254,18 @@ async def upload_url(
     """
 
     if "arcgis" in info.url.lower():
-        results = download_arcgis_service_information(url=info.url)
+        results = download_arcgis_service_information(url=info.url, app=request.app)
 
     elif "docs.google.com/spreadsheets" in info.url.lower():
         results = upload_google_sheets(url=info.url, app=request.app)
 
     elif "collection" in info.url.lower():
-        results = upload_ogc_api_feature_collection(url=info.url)
+        results = upload_ogc_api_feature_collection(url=info.url, app=request.app)
 
     elif "service=wfs" in info.url.lower():
-        results = upload_ogc_wfs(url=info.url)
+        results = upload_ogc_wfs(url=info.url, app=request.app)
 
     else:
-        results = download_data_from_url(url=info.url)
+        results = download_data_from_url(url=info.url, app=request.app)
 
     return results
