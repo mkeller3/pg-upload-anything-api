@@ -6,3 +6,6 @@ shapely==2.0.6
 openpyxl==3.1.5
 geojson==3.1.0
 aiofiles==24.1.0
+pytest==8.0.0
+psycopg==3.2.3
+pytest-postgresql==6.1.1

@@ -5,7 +5,6 @@ import subprocess
 import requests
 from fastapi import FastAPI, HTTPException, status
 
-from api.config import DB_HOST, DB_NAME, DB_PASSWORD, DB_USER
 from api.routers.upload_anything.utilities import (
     clean_string,
     upload_csv_file,
@@ -13,15 +12,15 @@ from api.routers.upload_anything.utilities import (
 )
 
 
-def upload_arcgis_service(url: str, service_name: str):
+def upload_arcgis_service(url: str, service_name: str, app: FastAPI):
     subprocess.call(
-        f"""ogr2ogr -f "PostgreSQL" PG:"dbname={DB_NAME} user={DB_USER} password={DB_PASSWORD} host={DB_HOST}" \
+        f"""ogr2ogr -f "PostgreSQL" PG:"dbname={app.state.dbname} user={app.state.dbuser} password={app.state.dbpass} host={app.state.dbhost} port={app.state.dbport}" \
         "{url}/query?where=1=1&outfields=*&f=geojson" -nln {service_name} -lco FID=gid -lco GEOMETRY_NAME=geom  -overwrite""",
         shell=True,
     )
 
 
-def download_arcgis_service_information(url: str):
+def download_arcgis_service_information(url: str, app: FastAPI):
     """
     Downloads an ArcGIS service using the ArcGIS REST API and then uploads each layer
     in the service to the server.
@@ -61,6 +60,7 @@ def download_arcgis_service_information(url: str):
                 upload_arcgis_service(
                     url=f"{url}{layer_information['id']}",
                     service_name=layer_information["name"].lower().replace(" ", "_"),
+                    app=app,
                 )
 
                 results.append(
@@ -77,7 +77,7 @@ def download_arcgis_service_information(url: str):
     else:
         if "Query" in data["capabilities"]:
             upload_arcgis_service(
-                url=url, service_name=data["name"].lower().replace(" ", "_")
+                url=url, service_name=data["name"].lower().replace(" ", "_"), app=app
             )
 
         return [{"status": True, "table_name": data["name"].lower().replace(" ", "_")}]
@@ -129,7 +129,7 @@ def upload_google_sheets(url: str, app: FastAPI):
     return [{"status": True, "table_name": file_name}]
 
 
-def upload_ogc_api_feature_collection(url: str):
+def upload_ogc_api_feature_collection(url: str, app: FastAPI):
     """
     Downloads a OGC API feature collection and imports it into a PostgreSQL database.
 
@@ -163,6 +163,7 @@ def upload_ogc_api_feature_collection(url: str):
     upload_geographic_file(
         file_path=f"{os.getcwd()}/media/{collection_id}.geojson",
         table_name=collection_id,
+        app=app,
     )
 
     os.remove(f"{os.getcwd()}/media/{collection_id}.geojson")
@@ -170,7 +171,7 @@ def upload_ogc_api_feature_collection(url: str):
     return [{"status": True, "table_name": collection_id}]
 
 
-def upload_ogc_wfs(url: str):
+def upload_ogc_wfs(url: str, app: FastAPI):
     """
     Downloads an OGC WFS feature collection and imports it into a PostgreSQL database.
 
@@ -218,6 +219,7 @@ def upload_ogc_wfs(url: str):
     upload_geographic_file(
         file_path=f"{os.getcwd()}/media/{collection_id}.geojson",
         table_name=collection_id,
+        app=app,
     )
 
     os.remove(f"{os.getcwd()}/media/{collection_id}.geojson")
@@ -225,7 +227,7 @@ def upload_ogc_wfs(url: str):
     return [{"status": True, "table_name": collection_id}]
 
 
-def download_data_from_url(url: str):
+def download_data_from_url(url: str, app: FastAPI):
     """
     Downloads data from a URL and imports it into a PostgreSQL database.
 
@@ -253,6 +255,7 @@ def download_data_from_url(url: str):
     upload_geographic_file(
         file_path=f"{os.getcwd()}/media/{url.split('/')[-1]}",
         table_name=url.split("/")[-1].split(".")[0],
+        app=app,
     )
 
     os.remove(f"{os.getcwd()}/media/{url.split('/')[-1]}")
