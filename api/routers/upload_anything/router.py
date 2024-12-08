@@ -90,7 +90,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
             for uploaded_file in media_directory:
                 if file_name in uploaded_file:
                     os.remove(
-                        f"{os.getcwd()}/media/{file.filename.split('.')[0]}/{file}"
+                        f"{os.getcwd()}/media/{file.filename.split('.')[0]}/{uploaded_file}"
                     )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -127,7 +127,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         media_directory = os.listdir(f"{os.getcwd()}/media/")
         for uploaded_file in media_directory:
             if file_name in uploaded_file:
-                os.remove(f"{os.getcwd()}/media/{file}")
+                os.remove(f"{os.getcwd()}/media/{uploaded_file}")
     elif file.content_type == "text/csv":
         result = upload_csv_file(
             write_file_path=write_file_path,
@@ -144,7 +144,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         media_directory = os.listdir(f"{os.getcwd()}/media/")
         for uploaded_file in media_directory:
             if file_name in uploaded_file:
-                os.remove(f"{os.getcwd()}/media/{file}")
+                os.remove(f"{os.getcwd()}/media/{uploaded_file}")
 
         results = [result]
     else:
@@ -224,7 +224,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
             media_directory = os.listdir(f"{os.getcwd()}/media/")
             for uploaded_file in media_directory:
                 if file_name in uploaded_file:
-                    os.remove(f"{os.getcwd()}/media/{file}")
+                    os.remove(f"{os.getcwd()}/media/{uploaded_file}")
         else:
             results = upload_geographic_file(
                 file_path=f"{os.getcwd()}/media/{new_file_name}.{valid_file_extension}",
@@ -234,7 +234,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         media_directory = os.listdir(f"{os.getcwd()}/media/")
         for uploaded_file in media_directory:
             if file_name in uploaded_file:
-                os.remove(f"{os.getcwd()}/media/{file}")
+                os.remove(f"{os.getcwd()}/media/{uploaded_file}")
         if os.path.exists(f"{os.getcwd()}/media/{new_file_name}"):
             shutil.rmtree(f"{os.getcwd()}/media/{new_file_name}")
 
