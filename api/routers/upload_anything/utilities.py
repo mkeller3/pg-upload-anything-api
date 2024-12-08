@@ -200,17 +200,18 @@ def convert_csv_to_geojson(file_path: str):
     Args:
         file_path (str): The path to the CSV file to be converted.
     """
-    geojson_object = {"type": "FeatureCollection", "features": []}
+    features = []
     with open(file_path, "r") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            geojson_object["features"].append(
+            features.append(
                 {
                     "type": "Feature",
                     "geometry": json.loads(row["geojson"]),
                     "properties": {k: v for k, v in row.items() if k != "geojson"},
                 }
             )
+    geojson_object = {"type": "FeatureCollection", "features": []}
     with open(file_path.replace(".csv", ".geojson"), "w") as f:
         json.dump(geojson_object, f)
 
@@ -240,17 +241,18 @@ def convert_wkt_to_geojson(file_path: str):
     Args:
         file_path (str): The path to the CSV file to be converted.
     """
-    geojson_object = {"type": "FeatureCollection", "features": []}
+    features = []
     with open(file_path, "r") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            geojson_object["features"].append(
+            features.append(
                 {
                     "type": "Feature",
                     "geometry": convert_wkt_geometry_to_geojson(row["wkt"]),
                     "properties": {k: v for k, v in row.items() if k != "wkt"},
                 }
             )
+    geojson_object = {"type": "FeatureCollection", "features": []}
     with open(file_path.replace(".csv", ".geojson"), "w") as f:
         json.dump(geojson_object, f)
 
@@ -280,22 +282,23 @@ def convert_wkb_to_geojson(file_path: str):
     Args:
         file_path (str): The path to the CSV file to be converted.
     """
-    geojson_object = {"type": "FeatureCollection", "features": []}
+    features = []    
     with open(file_path, "r") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            geojson_object["features"].append(
+            features.append(
                 {
                     "type": "Feature",
                     "geometry": convert_wkb_geometry_to_geojson(row["wkb"]),
                     "properties": {k: v for k, v in row.items() if k != "wkb"},
                 }
             )
+    geojson_object = {"type": "FeatureCollection", "features": features}
     with open(file_path.replace(".csv", ".geojson"), "w") as f:
         json.dump(geojson_object, f)
 
 
-def upload_csv_file(write_file_path: str, file_name: str, app: FastAPI) -> object:
+def upload_csv_file(write_file_path: str, file_name: str, app: FastAPI) -> dict:
     """
     Uploads a CSV file to a PostgreSQL database by finding a matching geography and either importing as points or joining to a map service.
 

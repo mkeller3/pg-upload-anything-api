@@ -10,7 +10,7 @@ import openpyxl
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 
 from api.config import DEFAULT_CHUNK_SIZE
-from api.routers.upload_anything.models import ResponseModel, uploadUrlRequestModel
+from api.routers.upload_anything.upload_models import ResponseModel, uploadUrlRequestModel
 from api.routers.upload_anything.url_utilities import (
     download_arcgis_service_information,
     download_data_from_url,
@@ -69,7 +69,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
             detail=f'Please upload a valid file type. {" ,".join(valid_file_types)}',
         )
 
-    file_name = file.filename
+    file_name = str(file.filename)
 
     write_file_path = f"{os.getcwd()}/media/{file.filename}"
 
@@ -80,12 +80,13 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
             while chunk := await file.read(DEFAULT_CHUNK_SIZE):
                 await new_file.write(chunk)
     except Exception as e:
-        media_directory = os.listdir(
-            f"{os.getcwd()}/media/{file.filename.split('.')[0]}"
-        )
-        for file in media_directory:
-            if file_name in file:
-                os.remove(f"{os.getcwd()}/media/{file.filename.split('.')[0]}/{file}")
+        if file.filename:
+            media_directory = os.listdir(
+                f"{os.getcwd()}/media/{file.filename.split('.')[0]}"
+            )
+            for uploaded_file in media_directory:
+                if file_name in uploaded_file:
+                    os.remove(f"{os.getcwd()}/media/{file.filename.split('.')[0]}/{file}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="There was an error uploading the file. Error: " + str(e),
@@ -96,7 +97,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     ):
         new_file_name = file_name.split(".")[0]
-        print(new_file_name)
+
         os.makedirs(f"{os.getcwd()}/media/{new_file_name}")
         workbook = openpyxl.load_workbook(f"{os.getcwd()}/media/{new_file_name}.xlsx")
         results = []
@@ -116,11 +117,11 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
                 app=request.app,
             )
             results.append(result)
-        print("hereee")
+
         shutil.rmtree(f"{os.getcwd()}/media/{new_file_name}")
         media_directory = os.listdir(f"{os.getcwd()}/media/")
-        for file in media_directory:
-            if file_name in file:
+        for uploaded_file in media_directory:
+            if file_name in uploaded_file:
                 os.remove(f"{os.getcwd()}/media/{file}")
     elif file.content_type == "text/csv":
         result = upload_csv_file(
@@ -136,8 +137,8 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
             )
 
         media_directory = os.listdir(f"{os.getcwd()}/media/")
-        for file in media_directory:
-            if file_name in file:
+        for uploaded_file in media_directory:
+            if file_name in uploaded_file:
                 os.remove(f"{os.getcwd()}/media/{file}")
 
         results = [result]
@@ -145,15 +146,13 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         new_file_name = file_name.split(".")[0]
         valid_file_type = False
         valid_file_extension = ""
-        zip_file = False
         if file.content_type == "application/zip":
-            zip_file = True
             with zipfile.ZipFile(write_file_path, "r") as zip_ref:
                 zip_ref.extractall(f"{os.getcwd()}/media/{new_file_name}")
             media_directory = os.listdir(f"{os.getcwd()}/media/{new_file_name}")
             file_extension = media_directory[0].split(".")[-1]
-            for file in media_directory:
-                file_path = f"{media_directory}/{file}"
+            for uploaded_file in media_directory:
+                file_path = f"{media_directory}/{uploaded_file}"
                 mime_type, _ = mimetypes.guess_type(file_path)
                 file_extension = file_path.split(".")[-1]
                 if mime_type in valid_file_types:
@@ -164,8 +163,8 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
                     valid_file_type = True
         else:
             media_directory = os.listdir(f"{os.getcwd()}/media")
-            for file in media_directory:
-                file_path = f"{media_directory}/{file}"
+            for uploaded_file in media_directory:
+                file_path = f"{media_directory}/{uploaded_file}"
                 mime_type, _ = mimetypes.guess_type(file_path)
                 file_extension = file_path.split(".")[-1]
                 if mime_type in valid_file_types:
@@ -218,8 +217,8 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
                 results.append(result)
             shutil.rmtree(f"{os.getcwd()}/media/{new_file_name}")
             media_directory = os.listdir(f"{os.getcwd()}/media/")
-            for file in media_directory:
-                if file_name in file:
+            for uploaded_file in media_directory:
+                if file_name in uploaded_file:
                     os.remove(f"{os.getcwd()}/media/{file}")
         else:
             results = upload_geographic_file(
@@ -228,8 +227,8 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
                 app=request.app,
             )
         media_directory = os.listdir(f"{os.getcwd()}/media/")
-        for file in media_directory:
-            if file_name in file:
+        for uploaded_file in media_directory:
+            if file_name in uploaded_file:
                 os.remove(f"{os.getcwd()}/media/{file}")
         if os.path.exists(f"{os.getcwd()}/media/{new_file_name}"):
             shutil.rmtree(f"{os.getcwd()}/media/{new_file_name}")
