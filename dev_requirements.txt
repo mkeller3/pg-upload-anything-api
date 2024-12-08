@@ -18,3 +18,4 @@ types-psycopg2==2.9.21.20241019
 types-requests==2.32.0.20241016
 httpx==0.28.1
 requests==2.32.3
+python-multipart==0.0.19
