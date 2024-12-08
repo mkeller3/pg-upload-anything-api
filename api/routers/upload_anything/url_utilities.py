@@ -186,7 +186,9 @@ def upload_ogc_wfs(url: str, app: FastAPI):
     Raises:
         HTTPException: If there is an error downloading the WFS feature collection.
     """
-    response = requests.get(f"{url}&maxFeatures=50&outputFormat=application%2Fjson", timeout=60)
+    response = requests.get(
+        f"{url}&maxFeatures=50&outputFormat=application%2Fjson", timeout=60
+    )
     collection_id = clean_string(url.split("typeName=")[1].split("&")[0])
 
     if response.status_code != 200:
@@ -207,7 +209,8 @@ def upload_ogc_wfs(url: str, app: FastAPI):
 
     while more_features:
         response = requests.get(
-            f"{url}&maxFeatures=50&startIndex={total_features}&outputFormat=application%2Fjson", timeout=60
+            f"{url}&maxFeatures=50&startIndex={total_features}&outputFormat=application%2Fjson",
+            timeout=60,
         )
         if response.json()["features"] == []:
             more_features = False

@@ -300,12 +300,12 @@ def convert_wkb_to_geojson(file_path: str):
 
 def upload_csv_file(write_file_path: str, file_name: str, app: FastAPI) -> dict:
     """
-    Uploads a CSV file to a PostgreSQL database by finding a matching geography 
+    Uploads a CSV file to a PostgreSQL database by finding a matching geography
     and either importing as points or joining to a map service.
 
-    This function reads the first two lines of the CSV file, finds a matching geography 
-    by comparing the column names against the potential names of geography fields, and 
-    either imports the file as point data or joins it to a map service table based on 
+    This function reads the first two lines of the CSV file, finds a matching geography
+    by comparing the column names against the potential names of geography fields, and
+    either imports the file as point data or joins it to a map service table based on
     the matching geography.
 
     Args:
