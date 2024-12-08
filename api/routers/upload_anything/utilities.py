@@ -282,7 +282,7 @@ def convert_wkb_to_geojson(file_path: str):
     Args:
         file_path (str): The path to the CSV file to be converted.
     """
-    features = []    
+    features = []
     with open(file_path, "r") as f:
         reader = csv.DictReader(f)
         for row in reader:

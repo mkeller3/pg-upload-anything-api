@@ -10,7 +10,10 @@ import openpyxl
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 
 from api.config import DEFAULT_CHUNK_SIZE
-from api.routers.upload_anything.upload_models import ResponseModel, uploadUrlRequestModel
+from api.routers.upload_anything.upload_models import (
+    ResponseModel,
+    uploadUrlRequestModel,
+)
 from api.routers.upload_anything.url_utilities import (
     download_arcgis_service_information,
     download_data_from_url,
@@ -86,7 +89,9 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
             )
             for uploaded_file in media_directory:
                 if file_name in uploaded_file:
-                    os.remove(f"{os.getcwd()}/media/{file.filename.split('.')[0]}/{file}")
+                    os.remove(
+                        f"{os.getcwd()}/media/{file.filename.split('.')[0]}/{file}"
+                    )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="There was an error uploading the file. Error: " + str(e),
