@@ -34,7 +34,7 @@ def test_upload_file_csv(app):
     with open(f"{os.getcwd()}/tests/files/pass/us_capitals_excel.xlsx", "rb") as f:
         response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})
         assert response.status_code == 200
-    
+
     # Test with a invalid file type
     with open(f"{os.getcwd()}/tests/files/fail/test.txt", "rb") as f:
         response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})

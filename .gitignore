@@ -1,1 +1,8 @@
 __pycache__
+
+# test cache
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+/htmlcov/

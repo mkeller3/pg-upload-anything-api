@@ -31,7 +31,7 @@ def download_arcgis_service_information(url: str, app: FastAPI):
     Raises:
         HTTPException: If there is an error downloading the service.
     """
-    response = requests.get(f"{url}?f=pjson")
+    response = requests.get(f"{url}?f=pjson", timeout=60)
 
     if response.status_code != 200 or "error" in response.json():
         raise HTTPException(
@@ -46,7 +46,7 @@ def download_arcgis_service_information(url: str, app: FastAPI):
             url += "/"
         results = []
         for layer in data["layers"]:
-            layer_response = requests.get(f"{url}{layer['id']}?f=json")
+            layer_response = requests.get(f"{url}{layer['id']}?f=json", timeout=60)
 
             if layer_response.status_code != 200 or "error" in layer_response.json():
                 raise HTTPException(
@@ -96,7 +96,7 @@ def upload_google_sheets(url: str, app: FastAPI):
     # TODO support multiple sheets
     google_doc_id = url.split("d/")[1].split("/")[0]
     url = f"https://docs.google.com/spreadsheets/d/{google_doc_id}/export?format=csv&gid=0"
-    response = requests.get(url)
+    response = requests.get(url, timeout=60)
 
     if response.status_code != 200:
         raise HTTPException(
@@ -104,9 +104,10 @@ def upload_google_sheets(url: str, app: FastAPI):
             detail="There was an error downloading the spreadsheet",
         )
 
+    content_disposition = str(response.headers.get("content-disposition"))
+
     file_name = (
-        response.headers.get("content-disposition")
-        .split("filename=")[1]
+        content_disposition.split("filename=")[1]
         .split(";")[0]
         .replace('"', "")
         .replace(".csv", "")
@@ -139,7 +140,7 @@ def upload_ogc_api_feature_collection(url: str, app: FastAPI):
         url (str): The URL of the OGC API feature collection to be imported.
     """
     collection_id = url.split("collections/")[1].split("/")[0]
-    response = requests.get(f"{url}/items")
+    response = requests.get(f"{url}/items", timeout=60)
 
     if response.status_code != 200:
         raise HTTPException(
@@ -153,7 +154,7 @@ def upload_ogc_api_feature_collection(url: str, app: FastAPI):
     numberGenerated = feature_collection["numberReturned"]
 
     while numberMatched > numberGenerated:
-        response = requests.get(f"{url}/items?offset={numberGenerated}")
+        response = requests.get(f"{url}/items?offset={numberGenerated}", timeout=60)
         feature_collection["features"].extend(response.json()["features"])
         numberGenerated += response.json()["numberReturned"]
 
@@ -185,7 +186,9 @@ def upload_ogc_wfs(url: str, app: FastAPI):
     Raises:
         HTTPException: If there is an error downloading the WFS feature collection.
     """
-    response = requests.get(f"{url}&maxFeatures=50&outputFormat=application%2Fjson")
+    response = requests.get(
+        f"{url}&maxFeatures=50&outputFormat=application%2Fjson", timeout=60
+    )
     collection_id = clean_string(url.split("typeName=")[1].split("&")[0])
 
     if response.status_code != 200:
@@ -206,7 +209,8 @@ def upload_ogc_wfs(url: str, app: FastAPI):
 
     while more_features:
         response = requests.get(
-            f"{url}&maxFeatures=50&startIndex={total_features}&outputFormat=application%2Fjson"
+            f"{url}&maxFeatures=50&startIndex={total_features}&outputFormat=application%2Fjson",
+            timeout=60,
         )
         if response.json()["features"] == []:
             more_features = False
@@ -241,7 +245,7 @@ def download_data_from_url(url: str, app: FastAPI):
     Raises:
         HTTPException: If there is an error downloading the file.
     """
-    response = requests.get(url)
+    response = requests.get(url, timeout=60)
 
     if response.status_code != 200:
         raise HTTPException(

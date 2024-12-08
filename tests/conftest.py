@@ -102,7 +102,7 @@ def create_app(database) -> FastAPI:
 def app(database_wrapper):
     """Create APP with only custom functions."""
 
-    app = create_app(database_wrapper)   
+    app = create_app(database_wrapper)
 
     with TestClient(app) as client:
         yield client
