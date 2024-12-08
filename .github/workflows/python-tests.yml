@@ -39,7 +39,8 @@ jobs:
       run: |
         ruff format api --check
 
-    - name: Format check
+    - name: Static type check
       shell: bash -l {0}
       run: |
+        mypy --install-types
         pytest -v -s --mypy api
