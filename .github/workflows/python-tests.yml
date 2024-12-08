@@ -44,3 +44,14 @@ jobs:
       run: |
         mypy --install-types
         pytest -v -s --mypy api
+    
+    - name: Run tests with pytest
+        run: |
+          coverage run -m pytest tests
+          coverage xml --omit="*/test*,/usr/lib/python3/*"
+
+    - name: Run codacy-coverage-reporter
+      uses: codacy/codacy-coverage-reporter-action@v1
+      with:
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        coverage-reports: coverage.xml
