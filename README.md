@@ -3,6 +3,13 @@
   <h1 align="center">pg-upload-anything-api</h1>
 </p>
 
+---
+
+[![test](https://github.com/mkeller3/pg-upload-anything-api/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/mkeller3/pg-upload-anything-api/actions/workflows/unit_tests.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/5dfc4af2e8f640298197a37a4c2ea993)](https://app.codacy.com/gh/mkeller3/pg-upload-anything-api/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/5dfc4af2e8f640298197a37a4c2ea993)](https://app.codacy.com/gh/mkeller3/pg-upload-anything-api/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+![GitHub contributors](https://img.shields.io/github/contributors/mkeller3/pg-upload-anything-api)
+![GitHub last commit](https://img.shields.io/github/last-commit/mkeller3/pg-upload-anything-api?logo=github)
 
 **pg-upload-anything-api**  is an api that allows you to easily upload geographical vector data into a PostgreSQL database. This API allows you take the guess work out of loading geograhphic or non geographic files into the database. This project was built with inspiration from Felt's [Upload Anything](https://felt.com/blog/upload-anything) API endpoints.
 
