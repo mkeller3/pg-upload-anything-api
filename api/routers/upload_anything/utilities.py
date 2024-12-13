@@ -10,8 +10,6 @@ import psycopg2
 from fastapi import FastAPI, HTTPException, status
 from shapely import wkb, wkt
 
-VALID_OGR_RETURN_CODES = ["0", "139"]
-
 
 def upload_flat_file(
     file_name: str,
@@ -201,7 +199,7 @@ def import_point_dataset(
         shell=True,
     )
 
-    if str(result.returncode) not in VALID_OGR_RETURN_CODES:
+    if result.returncode != 0 and "segmentation fault" not in result.stderr.lower():
         default_error = result.stderr
 
         if "Unable to open datasource" in default_error:
@@ -249,7 +247,7 @@ def join_to_map_service(
         shell=True,
     )
 
-    if str(result.returncode) not in VALID_OGR_RETURN_CODES:
+    if result.returncode != 0 and "segmentation fault" not in result.stderr.lower():
         default_error = result.stderr
 
         if "Unable to open datasource" in default_error:
@@ -316,9 +314,8 @@ def upload_geographic_file(
         text=True,
         shell=True,
     )
-    print(result)
 
-    if str(result.returncode) not in VALID_OGR_RETURN_CODES:
+    if result.returncode != 0 and "segmentation fault" not in result.stderr.lower():
         default_error = result.stderr
 
         if "Unable to open datasource" in default_error:
