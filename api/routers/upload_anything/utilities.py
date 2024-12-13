@@ -317,10 +317,7 @@ def upload_geographic_file(
         shell=True,
     )
 
-    print("str(result.returncode)", str(result.returncode))
-
     if str(result.returncode) not in VALID_OGR_RETURN_CODES:
-        print("HERE")
         default_error = result.stderr
 
         if "Unable to open datasource" in default_error:
