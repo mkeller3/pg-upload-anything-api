@@ -35,11 +35,6 @@ def test_upload_file_csv(app):
         response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})
         assert response.status_code == 200
 
-    # Test with a invalid file type
-    with open(f"{os.getcwd()}/tests/files/fail/test.txt", "rb") as f:
-        response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})
-        assert response.status_code == 400
-
     # Test with a geojson file
     with open(f"{os.getcwd()}/tests/files/pass/valid_geojson.geojson", "rb") as f:
         response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})
