@@ -8,6 +8,7 @@ def test_upload_file_csv(app):
     # Test with a valid CSV file that contains WKT
     with open(f"{os.getcwd()}/tests/files/pass/wkt_test.csv", "rb") as f:
         response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})
+        print(response.json())
         assert response.status_code == 200
 
     # Test with a valid CSV file that contains WKB
