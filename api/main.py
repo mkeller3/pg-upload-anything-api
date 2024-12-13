@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api import config
 from api.models import HealthCheckResponse
 from api.routers.upload_anything import router as upload_anything_router
 from api.version import __version__
@@ -45,6 +46,12 @@ app.include_router(
     prefix="/api/v1/upload_anything",
     tags=["Upload Anything"],
 )
+
+app.state.dbname = config.DB_NAME
+app.state.dbuser = config.DB_USER
+app.state.dbpass = config.DB_PASSWORD
+app.state.dbhost = config.DB_HOST
+app.state.dbport = config.DB_PORT
 
 
 @app.get("/api/v1/health_check", tags=["Health"], response_model=HealthCheckResponse)

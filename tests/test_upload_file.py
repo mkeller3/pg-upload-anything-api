@@ -35,11 +35,6 @@ def test_upload_file_csv(app):
         response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})
         assert response.status_code == 200
 
-    # Test with a invalid file type
-    with open(f"{os.getcwd()}/tests/files/fail/test.txt", "rb") as f:
-        response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})
-        assert response.status_code == 400
-
     # Test with a geojson file
     with open(f"{os.getcwd()}/tests/files/pass/valid_geojson.geojson", "rb") as f:
         response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})
@@ -57,5 +52,20 @@ def test_upload_file_csv(app):
     
     # Test with a zip file - xlsx
     with open(f"{os.getcwd()}/tests/files/pass/us_capitals_excel.zip", "rb") as f:
+        response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})
+        assert response.status_code == 200
+    
+    # Test with a doc file
+    with open(f"{os.getcwd()}/tests/files/fail/unvalid_geojson_file.doc", "rb") as f:
+        response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})
+        assert response.status_code == 400
+    
+    # Test with a bad geojson
+    with open(f"{os.getcwd()}/tests/files/fail/unvalid_geojson.geojson", "rb") as f:
+        response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})
+        assert response.status_code == 400
+    
+    # Test with a shapefile
+    with open(f"{os.getcwd()}/tests/files/pass/valid_shapefile.zip", "rb") as f:
         response = app.post("/api/v1/upload_anything/upload_file", files={"file": f})
         assert response.status_code == 200

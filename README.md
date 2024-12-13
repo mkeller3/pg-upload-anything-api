@@ -5,7 +5,7 @@
 
 ---
 
-[![test](https://github.com/mkeller3/pg-upload-anything-api/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/mkeller3/pg-upload-anything-api/actions/workflows/unit_tests.yml)
+[![test](https://github.com/mkeller3/pg-upload-anything-api/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/mkeller3/pg-upload-anything-api/actions/workflows/python-tests.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/5dfc4af2e8f640298197a37a4c2ea993)](https://app.codacy.com/gh/mkeller3/pg-upload-anything-api/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/5dfc4af2e8f640298197a37a4c2ea993)](https://app.codacy.com/gh/mkeller3/pg-upload-anything-api/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 ![GitHub contributors](https://img.shields.io/github/contributors/mkeller3/pg-upload-anything-api)
@@ -51,6 +51,7 @@ Read data directly from all sheets within the spreadsheet.
 - If your data contains coordinates, it will convert your data to a point dataset.
 - If your data contains geojson, WKT, or WKB. It will convert your data to the correct geometry.
 - If your data contains a column that matches a pre-determined geography, it will convert your data to that geography.
+You will need to set your geographies in the `geogrpahies.json` file. For more information about setting geographies [click here.](#setting-matching-geographies)
 
 
 #### Parameters
@@ -95,3 +96,40 @@ Read data directly from all sheets within the spreadsheet.
 ```json
 [{"status": "success", "table_name": "table_name"}]
 ```
+
+### Setting Matching Geographies
+
+In order to match data from a spreadsheet to a geography, you will need to define a list of potential geographies. By default, we reccomend keep the first 4 in the rankings. The matching algorithm will loop through all of the potential geographies to find the highest ranking match. Please take that into consederation when applying your rankings to any addtional geographies you may apply. 
+
+```json
+[
+  {
+    "name": "latitude_and_longitude",
+    "fields": {
+      "latitude": { "potential_names": ["latitude", "lat", "x"] },
+      "longitude": { "potential_names": ["longitude", "lon", "y"] }
+    },
+    "rank": 4
+  },
+  {
+    "name": "wkt_geometry",
+    "fields": { "geometry": { "potential_names": ["wkt"] } },
+    "rank": 2
+  },
+  {
+    "name": "wkb_geometry",
+    "fields": { "geometry": { "potential_names": ["wkb"] } },
+    "rank": 1
+  },
+  {
+    "name": "geojson_geometry",
+    "fields": { "geometry": { "potential_names": ["geojson"] } },
+    "rank": 3
+  }
+]
+```
+
+
+
+
+
