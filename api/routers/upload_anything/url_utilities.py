@@ -13,6 +13,8 @@ from api.routers.upload_anything.utilities import (
 
 
 def upload_arcgis_service(url: str, service_name: str, app: FastAPI):
+    service_name = clean_string(service_name)
+
     subprocess.call(
         f"""ogr2ogr -f "PostgreSQL" PG:"dbname={app.state.dbname} user={app.state.dbuser} password={app.state.dbpass} host={app.state.dbhost} port={app.state.dbport}" \
         "{url}/query?where=1=1&outfields=*&f=geojson" -nln {service_name} -lco FID=gid -lco GEOMETRY_NAME=geom  -overwrite""",

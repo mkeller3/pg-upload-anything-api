@@ -1,30 +1,10 @@
 [
   {
-    "name": "address",
-    "fields": {
-      "address_1": { "potential_names": ["address", "address_1"] },
-      "address_2": { "potential_names": ["address_2"] },
-      "zip": { "potential_names": ["zip", "postal_code", "zip_code"] },
-      "state": {
-        "potential_names": [
-          "state",
-          "province",
-          "state_code",
-          "state_name",
-          "state_abbreviation",
-          "state_abbr",
-          "st"
-        ]
-      }
-    },
-    "rank": 5
-  },
-  {
     "name": "zip_code",
     "fields": {
       "zip_code": { "potential_names": ["zip", "postal_code", "zip_code"] }
     },
-    "rank": 8
+    "rank": 7
   },
   {
     "name": "counties",
@@ -39,7 +19,7 @@
         ]
       }
     },
-    "rank": 7
+    "rank": 6
   },
   {
     "name": "states",
@@ -56,7 +36,7 @@
         ]
       }
     },
-    "rank": 6
+    "rank": 5
   },
   {
     "name": "latitude_and_longitude",

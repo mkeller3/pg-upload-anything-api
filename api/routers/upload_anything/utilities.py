@@ -1,12 +1,85 @@
 import csv
 import json
 import os
+import shutil
 import subprocess
 
 import geojson
+import openpyxl
 import psycopg2
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from shapely import wkb, wkt
+
+
+def upload_flat_file(
+    file_name: str,
+    file_extension: str,
+    file_path: str,
+    app: FastAPI,
+    zip_file: bool = False,
+):
+    """
+    Upload a flat file to the server and import it into a PostgreSQL database.
+    """
+    if file_extension.lower() == "csv":
+        result = upload_csv_file(
+            write_file_path=file_path,
+            file_name=file_name,
+            app=app,
+        )
+
+        if result["status"] is False:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result["message"],
+            )
+
+        results = [result]
+
+    elif file_extension.lower() == "xlsx":
+        new_file_name = file_name.split(".")[0]
+        os.makedirs(f"{os.getcwd()}/media/{new_file_name}/{new_file_name}")
+        workbook = openpyxl.load_workbook(
+            f"{os.getcwd()}/media/{new_file_name}/{new_file_name}.xlsx"
+        )
+        results = []
+        for sheet in workbook:
+            worksheet = workbook[sheet.title]
+            with open(
+                f"{os.getcwd()}/media/{new_file_name}/{new_file_name}/{sheet.title}.csv",
+                "w",
+                newline="",
+            ) as csvfile:
+                csvwriter = csv.writer(csvfile)
+                for row in worksheet.iter_rows(values_only=True):
+                    csvwriter.writerow(row)
+            result = upload_csv_file(
+                write_file_path=f"{os.getcwd()}/media/{new_file_name}/{new_file_name}/{sheet.title}.csv",
+                file_name=sheet.title,
+                app=app,
+            )
+            results.append(result)
+        shutil.rmtree(f"{os.getcwd()}/media/{new_file_name}")
+        media_directory = os.listdir(f"{os.getcwd()}/media/")
+        for uploaded_file in media_directory:
+            if file_name in uploaded_file:
+                os.remove(f"{os.getcwd()}/media/{uploaded_file}")
+    else:
+        results = upload_geographic_file(
+            file_path=file_path, table_name=file_name, app=app, zip_file=zip_file
+        )
+    media_directory = os.listdir(f"{os.getcwd()}/media/")
+    for uploaded_file in media_directory:
+        if file_name in uploaded_file and os.path.isfile(
+            f"{os.getcwd()}/media/{uploaded_file}"
+        ):
+            os.remove(f"{os.getcwd()}/media/{uploaded_file}")
+    if os.path.exists(f"{os.getcwd()}/media/{file_name}"):
+        shutil.rmtree(f"{os.getcwd()}/media/{file_name}")
+
+    if zip_file:
+        return results[0]
+    return results
 
 
 def clean_string(string: str):
@@ -28,6 +101,25 @@ def clean_string(string: str):
         .replace(":", "_")
         .lower()
     )
+
+
+def delete_files(file_name: str):
+    """
+    Deletes files and directories from the media directory that match the given file name.
+
+    This function iterates through the files in the media directory and removes any files
+    that contain the specified file name. It also removes a directory with the specified
+    file name if it exists.
+
+    Args:
+        file_name (str): The name of the file or directory to be deleted.
+    """
+    media_directory = os.listdir(f"{os.getcwd()}/media/")
+    for file in media_directory:
+        if file_name in file and os.path.isfile(f"{os.getcwd()}/media/{file}"):
+            os.remove(f"{os.getcwd()}/media/{file}")
+    if os.path.exists(f"{os.getcwd()}/media/{file_name}"):
+        shutil.rmtree(f"{os.getcwd()}/media/{file_name}")
 
 
 def find_matching_geographies(column_names: list, app: FastAPI):
@@ -88,7 +180,9 @@ def import_point_dataset(
         table_name (str): The name of the PostgreSQL table where the data will be imported.
 
     """
-    subprocess.call(
+    table_name = clean_string(table_name)
+
+    result = subprocess.run(
         f"""ogr2ogr \
         -f "PostgreSQL" PG:"dbname={app.state.dbname} user={app.state.dbuser} password={app.state.dbpass} host={app.state.dbhost} port={app.state.dbport}" \
         {file_path} \
@@ -100,8 +194,20 @@ def import_point_dataset(
         -lco FID=gid \
         -nlt POINT \
         -overwrite""",
+        capture_output=True,
+        text=True,
         shell=True,
     )
+
+    if result.returncode != 0:
+        default_error = result.stderr
+
+        if "Unable to open datasource" in default_error:
+            default_error = "The file provided is not a valid geographic file or has invalid geometry."
+        delete_files(table_name)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=default_error
+        )
 
     return {
         "status": True,
@@ -131,11 +237,28 @@ def join_to_map_service(
         table_match_column (str): The column name in the file that will be used to join the data to the map service.
         map_match_column (str): The column name in the map service table that will be used to join the data to the map service.
     """
-    subprocess.call(
+    table_name = clean_string(table_name)
+
+    result = subprocess.run(
         f"""ogr2ogr -f "PostgreSQL" PG:"dbname={app.state.dbname} user={app.state.dbuser} password={app.state.dbpass} host={app.state.dbhost} port={app.state.dbport}" \
         {file_path} -nln {table_name}_temp -lco FID=gid  -overwrite""",
+        capture_output=True,
+        text=True,
         shell=True,
     )
+
+    if result.returncode != 0:
+        default_error = result.stderr
+
+        if "Unable to open datasource" in default_error:
+            default_error = "The file provided is not a valid geographic file or has invalid geometry."
+
+        delete_files(table_name)
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=default_error
+        )
+
     drop_table_query = f"""DROP TABLE IF EXISTS "{table_name}";"""
     join_sql = f"""CREATE TABLE "{table_name}" AS
             SELECT a.*, b."{map_match_column}", b.geom
@@ -166,7 +289,9 @@ def join_to_map_service(
     }
 
 
-def upload_geographic_file(file_path: str, table_name: str, app: FastAPI):
+def upload_geographic_file(
+    file_path: str, table_name: str, app: FastAPI, zip_file: bool = False
+):
     """
     Uploads a geographic file to a PostgreSQL database using the ogr2ogr command.
 
@@ -178,12 +303,39 @@ def upload_geographic_file(file_path: str, table_name: str, app: FastAPI):
         file_path (str): The path to the geographic file to be uploaded.
         table_name (str): The name of the PostgreSQL table where the data will be stored.
     """
+    table_name = clean_string(table_name)
 
-    subprocess.call(
-        f"""ogr2ogr -f "PostgreSQL" PG:"dbname={app.state.dbname} user={app.state.dbuser} password={app.state.dbpass} host={app.state.dbhost} port={app.state.dbport}" \
-        {file_path} -nln {table_name} -lco FID=gid -lco GEOMETRY_NAME=geom  -overwrite""",
+    result = subprocess.run(
+        [
+            f"""ogr2ogr -f "PostgreSQL" PG:"dbname={app.state.dbname} user={app.state.dbuser} password={app.state.dbpass} host={app.state.dbhost} port={app.state.dbport}" \
+        {file_path} -nln {table_name} -lco FID=gid -lco GEOMETRY_NAME=geom  -overwrite"""
+        ],
+        capture_output=True,
+        text=True,
         shell=True,
     )
+
+    if result.returncode != 0:
+        default_error = result.stderr
+
+        if "Unable to open datasource" in default_error:
+            default_error = "The file provided is not a valid geographic file or has invalid geometry."
+
+        delete_files(table_name)
+
+        if zip_file:
+            return [
+                {
+                    "status": False,
+                    "table_name": table_name,
+                    "error": default_error,
+                }
+            ]
+
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=default_error
+            )
 
     return [
         {

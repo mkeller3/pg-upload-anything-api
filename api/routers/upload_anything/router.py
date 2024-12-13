@@ -1,5 +1,4 @@
 import csv
-import mimetypes
 import os
 import shutil
 import zipfile
@@ -23,7 +22,7 @@ from api.routers.upload_anything.url_utilities import (
 )
 from api.routers.upload_anything.utilities import (
     upload_csv_file,
-    upload_geographic_file,
+    upload_flat_file,
 )
 
 router = APIRouter()
@@ -34,7 +33,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
     """
     Upload a file to the server and import it into a PostgreSQL database.
 
-    The file can be in any of the following formats:
+    The file can be in formats such as:
     - CSV
     - Excel (xlsx)
     - GeoPackage
@@ -46,31 +45,6 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
     - Shapefile
     - ZIP (containing one of the above formats)
     """
-
-    valid_file_type = False
-
-    valid_file_types = [
-        "text/csv",
-        "application/vnd.ms-excel",
-        "application/geopackage+sqlite3",
-        "application/geo+json",
-        "application/gml+xml",
-        "application/gpx+xml",
-        "application/vnd.google-earth.kml+xml",
-        "application/vnd.sqlite3",
-        "application/vnd.shp",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "application/zip",
-    ]
-
-    if file.content_type in valid_file_types:
-        valid_file_type = True
-
-    if valid_file_type is False:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Please upload a valid file type. {" ,".join(valid_file_types)}',
-        )
 
     file_name = str(file.filename)
 
@@ -149,94 +123,44 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         results = [result]
     else:
         new_file_name = file_name.split(".")[0]
-        valid_file_type = False
-        valid_file_extension = ""
         if file.content_type == "application/zip":
             with zipfile.ZipFile(write_file_path, "r") as zip_ref:
                 zip_ref.extractall(f"{os.getcwd()}/media/{new_file_name}")
             media_directory = os.listdir(f"{os.getcwd()}/media/{new_file_name}")
-            file_extension = media_directory[0].split(".")[-1]
-            for uploaded_file in media_directory:
-                file_path = f"{media_directory}/{uploaded_file}"
-                mime_type, _ = mimetypes.guess_type(file_path)
-                file_extension = file_path.split(".")[-1]
-                if mime_type in valid_file_types:
-                    valid_file_type = True
-                    valid_file_extension = file_path.split(".")[-1]
-                if file_extension.lower() in ["gdb", "tab", "shp"]:
-                    valid_file_extension = file_path.split(".")[-1]
-                    valid_file_type = True
-        else:
-            media_directory = os.listdir(f"{os.getcwd()}/media")
-            for uploaded_file in media_directory:
-                file_path = f"{media_directory}/{uploaded_file}"
-                mime_type, _ = mimetypes.guess_type(file_path)
-                file_extension = file_path.split(".")[-1]
-                if mime_type in valid_file_types:
-                    valid_file_type = True
-                    valid_file_extension = file_path.split(".")[-1]
-
-        if valid_file_type is False:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f'Please upload a valid file type within your zip file. {" ,".join(valid_file_types)}',
-            )
-
-        if file_extension.lower() == "csv":
-            result = upload_csv_file(
-                write_file_path=f"{os.getcwd()}/media/{new_file_name}/{new_file_name}.{file_extension}",
-                file_name=file_name.split(".")[0],
-                app=request.app,
-            )
-
-            if result["status"] is False:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=result["message"],
-                )
-
-            results = [result]
-
-        elif file_extension.lower() == "xlsx":
-            new_file_name = file_name.split(".")[0]
-            os.makedirs(f"{os.getcwd()}/media/{new_file_name}/{new_file_name}")
-            workbook = openpyxl.load_workbook(
-                f"{os.getcwd()}/media/{new_file_name}/{new_file_name}.xlsx"
-            )
             results = []
-            for sheet in workbook:
-                worksheet = workbook[sheet.title]
-                with open(
-                    f"{os.getcwd()}/media/{new_file_name}/{new_file_name}/{sheet.title}.csv",
-                    "w",
-                    newline="",
-                ) as csvfile:
-                    csvwriter = csv.writer(csvfile)
-                    for row in worksheet.iter_rows(values_only=True):
-                        csvwriter.writerow(row)
-                result = upload_csv_file(
-                    write_file_path=f"{os.getcwd()}/media/{new_file_name}/{new_file_name}/{sheet.title}.csv",
-                    file_name=sheet.title,
+            for uploaded_file in media_directory:
+                file_path = f"{os.getcwd()}/media/{new_file_name}/{uploaded_file}"
+                file_extension = file_path.split(".")[-1]
+                result = upload_flat_file(
+                    file_path=file_path,
+                    file_extension=file_extension,
+                    file_name=uploaded_file.split(".")[0],
                     app=request.app,
+                    zip_file=True,
                 )
                 results.append(result)
-            shutil.rmtree(f"{os.getcwd()}/media/{new_file_name}")
+                if result["status"] is True:
+                    break
+            valid_results = [result for result in results if result["status"] is True]
+
+            if valid_results == []:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="The file provided is not a valid geographic file or has invalid geometry.",
+                )
+            if os.path.exists(f"{os.getcwd()}/media/{file_name}"):
+                shutil.rmtree(f"{os.getcwd()}/media/{new_file_name}")
             media_directory = os.listdir(f"{os.getcwd()}/media/")
             for uploaded_file in media_directory:
                 if file_name in uploaded_file:
                     os.remove(f"{os.getcwd()}/media/{uploaded_file}")
         else:
-            results = upload_geographic_file(
-                file_path=f"{os.getcwd()}/media/{new_file_name}.{valid_file_extension}",
-                table_name=file_name.split(".")[0],
+            results = upload_flat_file(
+                file_path=write_file_path,
+                file_name=file_name.split(".")[0],
+                file_extension=write_file_path.split(".")[-1],
                 app=request.app,
             )
-        media_directory = os.listdir(f"{os.getcwd()}/media/")
-        for uploaded_file in media_directory:
-            if file_name in uploaded_file:
-                os.remove(f"{os.getcwd()}/media/{uploaded_file}")
-        if os.path.exists(f"{os.getcwd()}/media/{new_file_name}"):
-            shutil.rmtree(f"{os.getcwd()}/media/{new_file_name}")
 
     return results
 
