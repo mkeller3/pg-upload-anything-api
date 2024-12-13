@@ -314,7 +314,7 @@ def upload_geographic_file(
         text=True,
         shell=True,
     )
-
+    print(result)
     if result.returncode != 0 and "Segmentation fault" not in result.stderr:
         default_error = result.stderr
 
