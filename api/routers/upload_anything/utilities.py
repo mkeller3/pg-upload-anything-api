@@ -316,6 +316,7 @@ def upload_geographic_file(
         text=True,
         shell=True,
     )
+    print(result)
 
     if str(result.returncode) not in VALID_OGR_RETURN_CODES:
         default_error = result.stderr
