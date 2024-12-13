@@ -315,7 +315,7 @@ def upload_geographic_file(
         shell=True,
     )
 
-    if result.returncode != 0 and 'Segmentation fault' not in result.stderr:
+    if result.returncode != 0 and "Segmentation fault" not in result.stderr:
         default_error = result.stderr
 
         if "Unable to open datasource" in default_error:
