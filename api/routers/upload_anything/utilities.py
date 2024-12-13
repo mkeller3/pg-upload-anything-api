@@ -10,7 +10,7 @@ import psycopg2
 from fastapi import FastAPI, HTTPException, status
 from shapely import wkb, wkt
 
-VALID_OGR_RETURN_CODES = ['0', '139']
+VALID_OGR_RETURN_CODES = ["0", "139"]
 
 
 def upload_flat_file(
@@ -316,7 +316,6 @@ def upload_geographic_file(
         text=True,
         shell=True,
     )
-
 
     if str(result.returncode) not in VALID_OGR_RETURN_CODES:
         default_error = result.stderr
