@@ -199,7 +199,7 @@ def import_point_dataset(
         shell=True,
     )
 
-    if result.returncode != 0 and "segmentation fault" not in result.stderr.lower():
+    if result.returncode != 0 and "failure" not in result.stderr.lower():
         default_error = result.stderr
 
         if "Unable to open datasource" in default_error:
@@ -247,7 +247,7 @@ def join_to_map_service(
         shell=True,
     )
 
-    if result.returncode != 0 and "segmentation fault" not in result.stderr.lower():
+    if result.returncode != 0 and "failure" not in result.stderr.lower():
         default_error = result.stderr
 
         if "Unable to open datasource" in default_error:
@@ -315,7 +315,7 @@ def upload_geographic_file(
         shell=True,
     )
 
-    if result.returncode != 0 and "segmentation fault" not in result.stderr.lower():
+    if result.returncode != 0 and "failure" not in result.stderr.lower():
         default_error = result.stderr
 
         if "Unable to open datasource" in default_error:
